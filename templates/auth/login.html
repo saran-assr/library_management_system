@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — SmartShelf{% endblock %}
+{% block page_subtitle %}Authentication Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-12 col-md-8 col-lg-5">
+    <div class="card card-custom p-4 p-md-5 border-0 shadow">
+      <div class="text-center mb-4">
+        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex p-3 mb-3">
+          <i class="bi bi-shield-lock fs-1"></i>
+        </div>
+        <h3 class="fw-bold text-dark">Welcome to SmartShelf</h3>
+        <p class="text-muted small">Sign in with your library credentials to continue</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label for="email" class="form-label fw-semibold small">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="form-control" id="email" name="email" required placeholder="name@domain.com" autofocus>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <label for="password" class="form-label fw-semibold small">Password</label>
+          </div>
+          <div class="input-group">
+            <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+            <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+        </button>
+      </form>
+
+      <!-- Quick Demo Account Fillers -->
+      <div class="mt-4 pt-3 border-top">
+        <div class="text-muted small text-center mb-2 fw-semibold">
+          <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Demo Logins
+        </div>
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary text-start d-flex align-items-center justify-content-between" onclick="fillDemo('admin@smartshelf.local', 'Admin@1234')">
+            <span><i class="bi bi-shield-shaded me-2"></i> <strong>Librarian / Admin</strong></span>
+            <span class="badge bg-primary">admin@smartshelf.local</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex align-items-center justify-content-between" onclick="fillDemo('john.doe@student.edu', 'Member@1234')">
+            <span><i class="bi bi-person me-2"></i> <strong>Student Member (John)</strong></span>
+            <span class="badge bg-secondary">john.doe@student.edu</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex align-items-center justify-content-between" onclick="fillDemo('jane.smith@student.edu', 'Member@1234')">
+            <span><i class="bi bi-person me-2"></i> <strong>Student Member (Jane - Overdue)</strong></span>
+            <span class="badge bg-secondary">jane.smith@student.edu</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="text-center mt-4 text-muted small">
+        Don't have a library account yet?
+        <a href="{{ url_for('auth.register') }}" class="text-primary fw-semibold text-decoration-none">Register as Member</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function fillDemo(email, pass) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').value = pass;
+  }
+</script>
+{% endblock %}

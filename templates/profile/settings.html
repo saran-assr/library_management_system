@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings — SmartShelf{% endblock %}
+{% block page_subtitle %}Profile & Security Preferences{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card card-custom p-4 mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-person-circle text-primary me-2"></i>My Profile</h5>
+      <form method="POST" action="{{ url_for('member.update_profile') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Full Name</label>
+          <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Email Address</label>
+          <input type="email" class="form-control bg-light" value="{{ user.email }}" readonly disabled>
+          <div class="form-text small">Email address is managed by institutional identity.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Contact Phone</label>
+          <input type="text" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="+1 555-0100">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-sm">Save Profile Changes</button>
+      </form>
+    </div>
+
+    <!-- Password Update -->
+    <div class="card card-custom p-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-shield-lock text-warning me-2"></i>Change Password</h5>
+      <form method="POST" action="{{ url_for('member.change_password') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Current Password</label>
+          <input type="password" name="current_password" class="form-control" required placeholder="••••••••">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">New Password (Min. 6 chars)</label>
+          <input type="password" name="new_password" class="form-control" required minlength="6" placeholder="••••••••">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold small">Confirm New Password</label>
+          <input type="password" name="confirm_password" class="form-control" required minlength="6" placeholder="••••••••">
+        </div>
+
+        <button type="submit" class="btn btn-warning text-dark btn-sm fw-semibold">Update Password</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

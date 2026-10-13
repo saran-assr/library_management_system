@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Librarian Dashboard — SmartShelf{% endblock %}
+{% block page_subtitle %}Administrator Operations & Real-Time Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <!-- Top Action Row -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">Library Overview</h3>
+      <p class="text-muted small mb-0">Real-time status of physical inventory, circulation, and member activity.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin.issue_return') }}" class="btn btn-primary d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left-right"></i> Issue / Return
+      </a>
+      <a href="{{ url_for('admin.books') }}" class="btn btn-outline-primary d-flex align-items-center gap-2">
+        <i class="bi bi-plus-circle"></i> Add Book
+      </a>
+      <a href="{{ url_for('admin.reports') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <i class="bi bi-download"></i> Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Summary Cards -->
+  <div class="row g-3">
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-book"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.total_titles }}</div>
+          <div class="stat-label">Unique Titles</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-info bg-opacity-10 text-info">
+          <i class="bi bi-collection"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.total_copies }}</div>
+          <div class="stat-label">Physical Copies</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-success bg-opacity-10 text-success">
+          <i class="bi bi-check2-circle"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.available_copies }}</div>
+          <div class="stat-label">Available Copies</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+          <i class="bi bi-journal-bookmark"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.borrowed_copies }}</div>
+          <div class="stat-label">Currently Borrowed</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+          <i class="bi bi-people"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.registered_members }}</div>
+          <div class="stat-label">Active Members</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div>
+          <div class="stat-value text-danger">{{ stats.overdue_loans }}</div>
+          <div class="stat-label">Overdue Loans</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ stats.pending_reservations }}</div>
+          <div class="stat-label">Pending Queues</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="bi bi-cash-coin"></i>
+        </div>
+        <div>
+          <div class="stat-value text-danger">{{ stats.currency }}{{ "%.2f"|format(stats.unpaid_fines_total) }}</div>
+          <div class="stat-label">Unpaid Fines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Charts Section -->
+  <div class="row g-4">
+    <div class="col-12 col-lg-8">
+      <div class="card card-custom p-3 p-md-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Monthly Borrowing Trends</h5>
+          <span class="badge bg-light text-muted">Last 6 Months</span>
+        </div>
+        <div style="height: 280px;">
+          <canvas id="monthlyLoansChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card card-custom p-3 p-md-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Circulation Status</h5>
+          <span class="badge bg-light text-muted">Real-Time</span>
+        </div>
+        <div style="height: 280px;">
+          <canvas id="loanStatusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card card-custom p-3 p-md-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Category Breakdown</h5>
+          <span class="badge bg-light text-muted">Inventory & Loans</span>
+        </div>
+        <div style="height: 260px;">
+          <canvas id="categoryDistributionChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="col-12 col-lg-6">
+      <div class="card card-custom p-3 p-md-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Recent Circulation Activity</h5>
+          <a href="{{ url_for('admin.reports') }}" class="small text-decoration-none">View All</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-custom align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Accession</th>
+                <th>Book Title</th>
+                <th>Member</th>
+                <th>Due Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for loan in stats.recent_loans %}
+              <tr>
+                <td><code>{{ loan.accession_id }}</code></td>
+                <td class="text-truncate" style="max-width: 140px;">{{ loan.book_title }}</td>
+                <td class="text-truncate" style="max-width: 110px;">{{ loan.member_name }}</td>
+                <td>{{ loan.due_date }}</td>
+                <td>
+                  {% if loan.status == 'returned' %}
+                    <span class="badge bg-success">Returned</span>
+                  {% elif loan.status == 'overdue' %}
+                    <span class="badge bg-danger">Overdue</span>
+                  {% else %}
+                    <span class="badge bg-primary">Active</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3">No circulation transactions recorded yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const chartData = {{ chart_data|tojson }};
+    initDashboardCharts(chartData);
+  });
+</script>
+{% endblock %}

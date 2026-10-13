@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications — SmartShelf{% endblock %}
+{% block page_subtitle %}Personal Alerts & Overdue Notices{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">Notification Centre</h3>
+      <p class="text-muted small mb-0">System updates, overdue notices, and reservation availability alerts.</p>
+    </div>
+    {% if notifications %}
+    <form method="POST" action="{{ url_for('member.mark_all_read') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-check2-all me-1"></i> Mark All as Read
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card card-custom p-3 p-md-4">
+    {% if notifications %}
+      <div class="list-group list-group-flush">
+        {% for notif in notifications %}
+        <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-start gap-3 {% if not notif.is_read %}bg-light rounded px-3 mb-2{% endif %}">
+          <div class="d-flex gap-3 align-items-start">
+            <div class="fs-4">
+              {% if notif.type == 'warning' or notif.type == 'danger' %}
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+              {% elif notif.type == 'success' %}
+                <i class="bi bi-check-circle-fill text-success"></i>
+              {% else %}
+                <i class="bi bi-info-circle-fill text-primary"></i>
+              {% endif %}
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <h6 class="fw-bold mb-0 text-dark">{{ notif.title }}</h6>
+                {% if not notif.is_read %}
+                  <span class="badge bg-primary" style="font-size: 0.65rem;">NEW</span>
+                {% endif %}
+              </div>
+              <p class="mb-1 text-secondary small">{{ notif.message }}</p>
+              <div class="text-muted" style="font-size: 0.75rem;">
+                <i class="bi bi-clock me-1"></i>{{ notif.created_at }}
+                {% if notif.link %}
+                  <a href="{{ notif.link }}" class="ms-2 text-decoration-none">View Details &rarr;</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          {% if not notif.is_read %}
+          <form method="POST" action="{{ url_for('member.mark_read', notif_id=notif.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-light text-muted" title="Mark as read">
+              <i class="bi bi-check"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-bell-slash fs-1 d-block mb-2 text-secondary"></i>
+        No notifications in your inbox.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Copies: {{ book.title }} — SmartShelf{% endblock %}
+{% block page_subtitle %}Accession Tracking & QR Identifiers{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <!-- Header & Back Button -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <div class="mb-1">
+        <a href="{{ url_for('admin.books') }}" class="text-decoration-none small text-muted">
+          <i class="bi bi-arrow-left me-1"></i> Back to Books
+        </a>
+      </div>
+      <h3 class="fw-bold mb-0">Physical Copies: {{ book.title }}</h3>
+      <span class="text-muted small">ISBN: <code>{{ book.isbn }}</code> | Author: {{ book.author }}</span>
+    </div>
+    <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addCopyModal">
+      <i class="bi bi-plus-lg"></i> Add Physical Copy
+    </button>
+  </div>
+
+  <!-- Copies Table -->
+  <div class="card card-custom overflow-hidden">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold mb-0">Catalogued Inventory ({{ copies|length }} copies)</h6>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Accession ID</th>
+            <th>Location Rack</th>
+            <th>Condition</th>
+            <th>Status</th>
+            <th>Borrower Info</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for copy in copies %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-qr-code text-primary fs-5"></i>
+                <strong class="font-monospace">{{ copy.accession_id }}</strong>
+              </div>
+            </td>
+            <td>{{ copy.location_rack or 'Not Specified' }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ copy.condition }}</span>
+            </td>
+            <td>
+              {% if copy.status == 'available' %}
+                <span class="badge badge-available">Available</span>
+              {% elif copy.status == 'borrowed' %}
+                <span class="badge badge-borrowed">Borrowed</span>
+              {% elif copy.status == 'reserved' %}
+                <span class="badge badge-reserved">Reserved</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ copy.status|title }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if copy.borrower_name %}
+                <div class="small fw-semibold text-dark">{{ copy.borrower_name }}</div>
+                <div class="text-muted small">Due: {{ copy.active_due_date }}</div>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-primary" title="View & Print QR Code"
+                        onclick="showQrModal('{{ copy.accession_id }}', '{{ book.title|escape }}')">
+                  <i class="bi bi-qr-code-scan"></i> QR Badge
+                </button>
+                <form method="POST" action="{{ url_for('admin.delete_copy', copy_id=copy.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger" title="Delete Copy"
+                          {% if copy.status == 'borrowed' %}disabled title="Cannot delete checked-out copy"{% endif %}
+                          data-confirm="Are you sure you want to remove physical copy {{ copy.accession_id }}?">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              No physical copies recorded yet for this title. Click "Add Physical Copy" above.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Physical Copy -->
+<div class="modal fade" id="addCopyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_copy', book_id=book.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Add Physical Copy</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold small">Accession ID (Barcode/Unique ID) *</label>
+            <input type="text" name="accession_id" class="form-control text-uppercase" required
+                   placeholder="e.g. ACC-{{ book.id }}-0{{ copies|length + 1 }}"
+                   value="ACC-{{ book.id }}-0{{ copies|length + 1 }}">
+            <div class="form-text small">Each physical copy must possess a unique identifier.</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold small">Location / Shelf Rack</label>
+            <input type="text" name="location_rack" class="form-control" placeholder="e.g. Rack B-3, Section 2">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold small">Condition</label>
+            <select name="condition" class="form-select">
+              <option value="New">New</option>
+              <option value="Good" selected>Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Worn">Worn</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Copy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: QR Code Badge -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold w-100" id="qrModalTitle">Book Copy Identifier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="qrImageContainer" class="p-3 bg-light rounded d-inline-block shadow-sm mb-3">
+          <!-- Dynamically populated -->
+        </div>
+        <h4 id="qrAccessionText" class="font-monospace fw-bold text-primary mb-1"></h4>
+        <p id="qrBookTitle" class="text-muted small mb-3"></p>
+        <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
+          <i class="bi bi-printer me-1"></i> Print QR Label
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function showQrModal(accId, bookTitle) {
+    document.getElementById('qrAccessionText').textContent = accId;
+    document.getElementById('qrBookTitle').textContent = bookTitle;
+    document.getElementById('qrImageContainer').innerHTML = `
+      <img src="/books/qr/${encodeURIComponent(accId)}" alt="QR Code" style="width: 180px; height: 180px;">
+    `;
+    new bootstrap.Modal(document.getElementById('qrModal')).show();
+  }
+</script>
+{% endblock %}

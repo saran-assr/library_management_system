@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}My Loans — SmartShelf{% endblock %}
+{% block page_subtitle %}Current Loans & Borrowing History{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <div>
+    <h3 class="fw-bold mb-1">My Book Loans</h3>
+    <p class="text-muted small mb-0">Track due dates, overdue statuses, and your complete borrowing history.</p>
+  </div>
+
+  <!-- Active Loans Card -->
+  <div class="card card-custom p-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-book-half text-primary me-2"></i>Active Loans</h5>
+    {% if active_loans %}
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Accession ID</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th>Accrued Fine</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in active_loans %}
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">{{ loan.book_title }}</div>
+              <div class="text-muted small">by {{ loan.book_author }}</div>
+            </td>
+            <td><code>{{ loan.accession_id }}</code></td>
+            <td class="text-muted small">{{ loan.issue_date }}</td>
+            <td class="fw-semibold {% if loan.is_overdue %}text-danger{% endif %}">{{ loan.due_date }}</td>
+            <td>
+              {% if loan.is_overdue %}
+                <span class="badge badge-overdue">Overdue ({{ loan.overdue_days }} days)</span>
+              {% else %}
+                <span class="badge badge-available">On Time</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if loan.is_overdue %}
+                <strong class="text-danger">${{ "%.2f"|format(loan.calculated_fine) }}</strong>
+              {% else %}
+                <span class="text-muted small">$0.00</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">You do not have any currently active book loans.</div>
+    {% endif %}
+  </div>
+
+  <!-- Historical Loans Card -->
+  <div class="card card-custom p-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-secondary me-2"></i>Borrowing History</h5>
+    {% if history %}
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Accession ID</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Returned Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in history %}
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">{{ loan.book_title }}</div>
+              <div class="text-muted small">by {{ loan.book_author }}</div>
+            </td>
+            <td><code>{{ loan.accession_id }}</code></td>
+            <td class="text-muted small">{{ loan.issue_date }}</td>
+            <td class="text-muted small">{{ loan.due_date }}</td>
+            <td class="text-muted small">{{ loan.return_date or '—' }}</td>
+            <td>
+              {% if loan.status == 'returned' %}
+                <span class="badge bg-success">Returned</span>
+              {% elif loan.status == 'overdue' %}
+                <span class="badge bg-danger">Overdue</span>
+              {% else %}
+                <span class="badge bg-primary">Active</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">No historical borrowing records found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

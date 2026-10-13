@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard — SmartShelf{% endblock %}
+{% block page_subtitle %}Personal Library Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <!-- Greeting Banner -->
+  <div class="card card-custom p-4 bg-primary text-white border-0 shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+      <div>
+        <h3 class="fw-bold mb-1">Welcome back, {{ session.get('user_name') }}!</h3>
+        <p class="text-white-50 mb-0 small">Manage your current loans, check return deadlines, and discover new books.</p>
+      </div>
+      <a href="{{ url_for('books.catalogue') }}" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-search me-1"></i> Browse Catalogue
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="row g-3">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-bookmark-check"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ active_loans|length }}</div>
+          <div class="stat-label">Active Loans</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="bi bi-alarm"></i>
+        </div>
+        <div>
+          <div class="stat-value text-danger">{{ overdue_count }}</div>
+          <div class="stat-label">Overdue Books</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ reservations|length }}</div>
+          <div class="stat-label">Reservations</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="bi bi-cash-coin"></i>
+        </div>
+        <div>
+          <div class="stat-value text-danger">${{ "%.2f"|format(unpaid_fines) }}</div>
+          <div class="stat-label">Unpaid Fines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Loans Section -->
+  <div class="card card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i>My Current Loans</h5>
+      <a href="{{ url_for('member.my_loans') }}" class="small text-decoration-none">View Loan History &rarr;</a>
+    </div>
+
+    {% if active_loans %}
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Accession #</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in active_loans %}
+          <tr>
+            <td>
+              <a href="{{ url_for('books.book_detail', book_id=loan.book_id) }}" class="fw-bold text-dark text-decoration-none">
+                {{ loan.book_title }}
+              </a>
+              <div class="text-muted small">by {{ loan.book_author }}</div>
+            </td>
+            <td><code>{{ loan.accession_id }}</code></td>
+            <td class="text-muted small">{{ loan.issue_date }}</td>
+            <td>
+              <span class="fw-semibold {% if loan.is_overdue %}text-danger{% endif %}">{{ loan.due_date }}</span>
+            </td>
+            <td>
+              {% if loan.is_overdue %}
+                <span class="badge badge-overdue">
+                  <i class="bi bi-exclamation-circle me-1"></i> Overdue ({{ loan.overdue_days }}d) — Fine: ${{ "%.2f"|format(loan.calculated_fine) }}
+                </span>
+              {% else %}
+                <span class="badge badge-available">On Schedule</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-book fs-1 d-block mb-2 text-secondary"></i>
+      You currently have no books checked out. Explore the catalogue to borrow your next read!
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Explainable Recommendations Section -->
+  <div class="card card-custom p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h5 class="fw-bold mb-1"><i class="bi bi-stars text-warning me-2"></i>Recommended for You</h5>
+        <p class="text-muted small mb-0">Explainable suggestions based on your reading history and popular titles.</p>
+      </div>
+      <a href="{{ url_for('books.catalogue') }}" class="small text-decoration-none">Browse All &rarr;</a>
+    </div>
+
+    <div class="row g-3">
+      {% for rec in recommendations %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="book-card p-3">
+          <div class="d-flex gap-3">
+            {% if rec.book.cover_image_url %}
+              <img src="{{ rec.book.cover_image_url }}" alt="Cover" class="rounded shadow-sm" style="width: 70px; height: 95px; object-fit: cover;">
+            {% else %}
+              <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted" style="width: 70px; height: 95px;">
+                <i class="bi bi-book"></i>
+              </div>
+            {% endif %}
+            <div class="d-flex flex-column justify-content-between">
+              <div>
+                <span class="badge bg-light text-primary border mb-1">{{ rec.badge }}</span>
+                <h6 class="fw-bold text-dark mb-1 text-truncate" style="max-width: 180px;">
+                  <a href="{{ url_for('books.book_detail', book_id=rec.book.id) }}" class="text-dark text-decoration-none">
+                    {{ rec.book.title }}
+                  </a>
+                </h6>
+                <div class="text-muted small text-truncate" style="max-width: 180px;">by {{ rec.book.author }}</div>
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem;">
+                <i class="bi bi-info-circle me-1"></i>{{ rec.reason }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

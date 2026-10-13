@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Issue & Return Workstation — SmartShelf{% endblock %}
+{% block page_subtitle %}Circulation Desk Operations{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="card card-custom p-4">
+      <ul class="nav nav-pills mb-4 nav-justified" id="circulationTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-bold py-2" id="issue-tab" data-bs-toggle="pill" data-bs-target="#issue-panel" type="button" role="tab">
+            <i class="bi bi-box-arrow-up-right me-2"></i> Issue Book
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-bold py-2" id="return-tab" data-bs-toggle="pill" data-bs-target="#return-panel" type="button" role="tab">
+            <i class="bi bi-box-arrow-in-left me-2"></i> Accept Return
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="circulationTabsContent">
+        <!-- 1. ISSUE TAB -->
+        <div class="tab-pane fade show active" id="issue-panel" role="tabpanel">
+          <form method="POST" action="{{ url_for('admin.issue_book') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Book Copy Accession ID *</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-qr-code-scan"></i></span>
+                <input type="text" name="accession_id" id="issueAccessionInput"
+                       class="form-control text-uppercase accession-lookup-input font-monospace"
+                       required placeholder="e.g. ACC-CS101-01" data-preview-target="issueBookPreview">
+              </div>
+              <div id="issueBookPreview"></div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Borrower / Member Email or ID *</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                <input type="text" name="member_query" id="memberLookupInput"
+                       class="form-control" required placeholder="Member email (e.g. john.doe@student.edu) or Member ID">
+              </div>
+              <div id="memberLookupPreview"></div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Loan Period (Days)</label>
+                <input type="number" name="duration_days" class="form-control" value="14" min="1" max="90">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Circulation Notes (Optional)</label>
+                <input type="text" name="notes" class="form-control" placeholder="Condition notes, reference...">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+              <i class="bi bi-check2-circle me-1"></i> Confirm & Issue Book
+            </button>
+          </form>
+        </div>
+
+        <!-- 2. RETURN TAB -->
+        <div class="tab-pane fade" id="return-panel" role="tabpanel">
+          <form method="POST" action="{{ url_for('admin.return_book') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Book Copy Accession ID *</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-qr-code-scan"></i></span>
+                <input type="text" name="accession_id" id="returnAccessionInput"
+                       class="form-control text-uppercase accession-lookup-input font-monospace"
+                       required placeholder="e.g. ACC-CS101-02" data-preview-target="returnBookPreview">
+              </div>
+              <div id="returnBookPreview"></div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold small">Return Inspection Notes (Optional)</label>
+              <input type="text" name="notes" class="form-control" placeholder="Book condition on return, etc.">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+              <i class="bi bi-arrow-return-left me-1"></i> Accept Return & Process
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Scan & Quick Helper Sidebar -->
+  <div class="col-12 col-lg-4">
+    <div class="card card-custom p-4 mb-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-camera-fill text-primary fs-5"></i>
+        <h6 class="fw-bold mb-0">QR Code Assistant</h6>
+      </div>
+      <p class="text-muted small">
+        Scan a book's physical QR badge using a standard 2D barcode scanner or camera to auto-fill the Accession ID.
+      </p>
+
+      <div class="p-3 bg-light rounded text-center mb-3">
+        <i class="bi bi-upc-scan fs-1 text-secondary d-block mb-2"></i>
+        <span class="small text-muted">USB / Bluetooth barcode scanners automatically type the Accession ID into the focused input field.</span>
+      </div>
+
+      <div class="small fw-semibold text-secondary mb-2">Quick Test Copies:</div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="quickFillAccession('ACC-CS101-01')">ACC-CS101-01 (Avail)</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="quickFillAccession('ACC-CS101-02')">ACC-CS101-02 (John)</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="quickFillAccession('ACC-LIT301-01')">ACC-LIT301-01 (Jane Overdue)</button>
+      </div>
+    </div>
+
+    <!-- Circulation Policy Info -->
+    <div class="card card-custom p-4">
+      <h6 class="fw-bold mb-3"><i class="bi bi-shield-check text-success me-2"></i>System Policy Rules</h6>
+      <ul class="small text-muted ps-3 mb-0">
+        <li class="mb-2"><strong>Max Loans:</strong> Members can borrow up to 3 books simultaneously.</li>
+        <li class="mb-2"><strong>Default Period:</strong> 14 calendar days per checkout.</li>
+        <li class="mb-2"><strong>Fines:</strong> $1.00 per overdue day, capped at $50.00 maximum.</li>
+        <li class="mb-2"><strong>Hold Queue:</strong> Returned reserved copies are held for 3 days for waiting members.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function quickFillAccession(id) {
+    const activeTab = document.querySelector('#circulationTabs .active').id;
+    if (activeTab === 'issue-tab') {
+      const input = document.getElementById('issueAccessionInput');
+      input.value = id;
+      input.dispatchEvent(new Event('input'));
+    } else {
+      const input = document.getElementById('returnAccessionInput');
+      input.value = id;
+      input.dispatchEvent(new Event('input'));
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs — SmartShelf{% endblock %}
+{% block page_subtitle %}Administrative Activity Audit Trail{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">Administrative Audit Trail</h3>
+      <p class="text-muted small mb-0">Chronological history of security-relevant system actions and circulation updates.</p>
+    </div>
+    <div class="badge bg-secondary fs-6 px-3 py-2">
+      <i class="bi bi-shield-check me-1"></i> Security Enforced
+    </div>
+  </div>
+
+  <div class="card card-custom overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>Operator</th>
+            <th>Entity Type</th>
+            <th>Details</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td class="text-nowrap small text-muted font-monospace">{{ log.created_at }}</td>
+            <td>
+              <span class="badge bg-dark font-monospace">{{ log.action }}</span>
+            </td>
+            <td>
+              {% if log.user_name %}
+                <div class="fw-semibold small">{{ log.user_name }}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">{{ log.user_email }}</div>
+              {% else %}
+                <span class="text-muted small">System Process</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-light text-secondary border">{{ log.entity_type }}</span></td>
+            <td class="small" style="max-width: 320px;">{{ log.details or '—' }}</td>
+            <td class="small text-muted font-monospace">{{ log.ip_address or '127.0.0.1' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">No audit logs recorded yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

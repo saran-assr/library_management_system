@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}My Reservations — SmartShelf{% endblock %}
+{% block page_subtitle %}Hold Queue Status{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">My Book Reservations</h3>
+      <p class="text-muted small mb-0">Track queue positions for borrowed titles and pickup availability.</p>
+    </div>
+    <a href="{{ url_for('books.catalogue') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-search me-1"></i> Browse Books to Reserve
+    </a>
+  </div>
+
+  <div class="card card-custom overflow-hidden">
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Queue Position</th>
+            <th>Status</th>
+            <th>Pickup Information</th>
+            <th>Reserved At</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for res in reservations %}
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">{{ res.book_title }}</div>
+              <div class="text-muted small">by {{ res.book_author }}</div>
+            </td>
+            <td>
+              <span class="badge bg-secondary font-monospace">#{{ res.queue_position }} in Queue</span>
+            </td>
+            <td>
+              {% if res.status == 'available_for_pickup' %}
+                <span class="badge bg-success">Ready for Pickup</span>
+              {% elif res.status == 'waiting' %}
+                <span class="badge bg-warning text-dark">Waiting for Return</span>
+              {% elif res.status == 'fulfilled' %}
+                <span class="badge bg-primary">Fulfilled</span>
+              {% elif res.status == 'expired' %}
+                <span class="badge bg-danger">Expired</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ res.status|title }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if res.status == 'available_for_pickup' %}
+                <div class="text-success fw-semibold">
+                  <i class="bi bi-check-circle me-1"></i> Copy Assigned: <code>{{ res.assigned_accession_id }}</code>
+                </div>
+                <div class="text-danger small">Pick up by: {{ res.hold_until }}</div>
+              {% else %}
+                <span class="text-muted small">You will receive an in-app alert when a copy is returned.</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ res.reserved_at[:16] }}</td>
+            <td class="text-end">
+              {% if res.status in ('waiting', 'available_for_pickup') %}
+              <form method="POST" action="{{ url_for('member.cancel_reservation', res_id=res.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="Cancel your reservation for {{ res.book_title }}?">
+                  Cancel Hold
+                </button>
+              </form>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              <i class="bi bi-journal-check fs-1 d-block mb-2 text-secondary"></i>
+              You have no active reservations. If a book you want is checked out, you can reserve it from the catalogue!
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

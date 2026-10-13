@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} — SmartShelf{% endblock %}
+{% block page_subtitle %}Book Information & Physical Availability{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column gap-4">
+  <!-- Back Link -->
+  <div>
+    <a href="{{ url_for('books.catalogue') }}" class="text-decoration-none small text-muted">
+      <i class="bi bi-arrow-left me-1"></i> Back to Catalogue
+    </a>
+  </div>
+
+  <!-- Book Main Detail Card -->
+  <div class="card card-custom p-4">
+    <div class="row g-4">
+      <div class="col-12 col-md-4 col-lg-3 text-center">
+        {% if book.cover_image_url %}
+          <img src="{{ book.cover_image_url }}" alt="{{ book.title }}" class="img-fluid rounded shadow" style="max-height: 340px; object-fit: cover;">
+        {% else %}
+          <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted shadow-sm mx-auto" style="width: 200px; height: 280px;">
+            <i class="bi bi-book fs-1"></i>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col-12 col-md-8 col-lg-9 d-flex flex-column">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <span class="badge bg-light text-primary border">
+            <i class="bi {{ book.category_icon or 'bi-bookmark' }} me-1"></i>{{ book.category_name }}
+          </span>
+          {% if book.available_copies > 0 %}
+            <span class="badge badge-available">
+              <i class="bi bi-check-circle me-1"></i> {{ book.available_copies }} of {{ book.total_copies }} Copies Available
+            </span>
+          {% else %}
+            <span class="badge badge-borrowed">
+              <i class="bi bi-exclamation-circle me-1"></i> All Copies Currently Checked Out
+            </span>
+          {% endif %}
+        </div>
+
+        <h2 class="fw-bold text-dark mb-1">{{ book.title }}</h2>
+        <div class="fs-5 text-muted mb-3">by <span class="text-dark">{{ book.author }}</span></div>
+
+        <p class="text-secondary mb-4 leading-relaxed">
+          {{ book.description or 'No synopsis or description available for this volume.' }}
+        </p>
+
+        <!-- Meta Grid -->
+        <div class="row g-2 mb-4 p-3 bg-light rounded small">
+          <div class="col-6 col-sm-3">
+            <div class="text-muted">ISBN</div>
+            <div class="fw-semibold font-monospace">{{ book.isbn }}</div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="text-muted">Publisher</div>
+            <div class="fw-semibold">{{ book.publisher or 'N/A' }}</div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="text-muted">Publication Year</div>
+            <div class="fw-semibold">{{ book.publication_year or 'N/A' }}</div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="text-muted">Total Inventory</div>
+            <div class="fw-semibold">{{ book.total_copies }} Copies</div>
+          </div>
+        </div>
+
+        <!-- Reservation / Action Button -->
+        <div class="mt-auto d-flex flex-wrap gap-2 align-items-center">
+          {% if book.available_copies == 0 %}
+            {% if session.get('user_id') and session.get('user_role') == 'member' %}
+              <form method="POST" action="{{ url_for('member.reserve_book', book_id=book.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-warning text-dark fw-bold px-4 py-2">
+                  <i class="bi bi-hourglass-split me-1"></i> Reserve This Book (FIFO Queue)
+                </button>
+              </form>
+            {% elif not session.get('user_id') %}
+              <a href="{{ url_for('auth.login', next=request.url) }}" class="btn btn-warning text-dark fw-bold px-4 py-2">
+                Sign In to Reserve Book
+              </a>
+            {% endif %}
+          {% else %}
+            <div class="alert alert-success d-inline-flex align-items-center py-2 px-3 mb-0 small">
+              <i class="bi bi-geo-alt-fill me-2 fs-5"></i>
+              Visit the circulation desk with the Accession ID below to check out this title.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Physical Copies Inventory Table -->
+  <div class="card card-custom p-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-collection text-primary me-2"></i>Physical Copy Locations & Shelf Status</h5>
+    <div class="table-responsive">
+      <table class="table table-custom align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Accession ID</th>
+            <th>Location Shelf / Rack</th>
+            <th>Condition</th>
+            <th>Current Availability</th>
+            <th class="text-end">QR Identifier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for copy in copies %}
+          <tr>
+            <td>
+              <strong class="font-monospace">{{ copy.accession_id }}</strong>
+            </td>
+            <td>{{ copy.location_rack or 'Main Stacks' }}</td>
+            <td><span class="badge bg-light text-dark border">{{ copy.condition }}</span></td>
+            <td>
+              {% if copy.status == 'available' %}
+                <span class="badge badge-available"><i class="bi bi-check-circle me-1"></i> Available on Shelf</span>
+              {% elif copy.status == 'borrowed' %}
+                <span class="badge badge-borrowed"><i class="bi bi-clock me-1"></i> Checked Out (Due: {{ copy.active_due_date }})</span>
+              {% elif copy.status == 'reserved' %}
+                <span class="badge badge-reserved"><i class="bi bi-hourglass-split me-1"></i> Reserved on Hold</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ copy.status|title }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('books.view_qr', accession_id=copy.accession_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-qr-code"></i> View QR
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">No physical copies tracked yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Similar Books Recommendations -->
+  {% if similar_books %}
+  <div class="card card-custom p-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-lightbulb text-warning me-2"></i>Readers Also Explored</h5>
+    <div class="row g-3">
+      {% for sim in similar_books %}
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="book-card p-3">
+          <div class="small text-muted mb-1">{{ sim.relation_reason }}</div>
+          <h6 class="fw-bold text-dark text-truncate mb-1">
+            <a href="{{ url_for('books.book_detail', book_id=sim.id) }}" class="text-dark text-decoration-none">
+              {{ sim.title }}
+            </a>
+          </h6>
+          <div class="text-muted small">by {{ sim.author }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

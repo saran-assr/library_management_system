@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Environment Secrets
+.env
+
+# SQLite WAL and temporary journal files (keep seeded library.db)
+instance/*.db-journal
+instance/*.db-wal
+instance/*.db-shm
+
+# Windows Local Scripts
+powershell.bat
+test.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
