@@ -68,7 +68,8 @@
       <div class="book-card">
         <div class="position-relative">
           {% if book.cover_image_url %}
-            <img src="{{ book.cover_image_url }}" alt="{{ book.title }}" class="book-cover-img">
+            <img src="{{ book.cover_image_url }}" alt="{{ book.title }}" class="book-cover-img"
+                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';">
           {% else %}
             <div class="book-cover-img d-flex align-items-center justify-content-center text-muted">
               <i class="bi bi-book fs-1"></i>

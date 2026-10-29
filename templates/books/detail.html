@@ -17,7 +17,8 @@
     <div class="row g-4">
       <div class="col-12 col-md-4 col-lg-3 text-center">
         {% if book.cover_image_url %}
-          <img src="{{ book.cover_image_url }}" alt="{{ book.title }}" class="img-fluid rounded shadow" style="max-height: 340px; object-fit: cover;">
+          <img src="{{ book.cover_image_url }}" alt="{{ book.title }}" class="img-fluid rounded shadow" style="max-height: 340px; object-fit: cover;"
+               onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';">
         {% else %}
           <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted shadow-sm mx-auto" style="width: 200px; height: 280px;">
             <i class="bi bi-book fs-1"></i>

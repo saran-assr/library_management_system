@@ -27,6 +27,7 @@ instance/*.db-shm
 # Windows Local Scripts
 powershell.bat
 test.txt
+token.txt
 
 # IDE
 .vscode/

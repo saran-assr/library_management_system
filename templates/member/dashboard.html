@@ -137,7 +137,8 @@
         <div class="book-card p-3">
           <div class="d-flex gap-3">
             {% if rec.book.cover_image_url %}
-              <img src="{{ rec.book.cover_image_url }}" alt="Cover" class="rounded shadow-sm" style="width: 70px; height: 95px; object-fit: cover;">
+              <img src="{{ rec.book.cover_image_url }}" alt="Cover" class="rounded shadow-sm" style="width: 70px; height: 95px; object-fit: cover;"
+                   onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80';">
             {% else %}
               <div class="rounded bg-light d-flex align-items-center justify-content-center text-muted" style="width: 70px; height: 95px;">
                 <i class="bi bi-book"></i>

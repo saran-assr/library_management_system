@@ -69,7 +69,7 @@ def seed_database(db_path=None):
                 "978-0132350884", "Clean Code: A Handbook of Agile Software Craftsmanship",
                 "Robert C. Martin", "Computer Science & Engineering", "Prentice Hall", 2008,
                 "Even bad code can function. But if code isn't clean, it can bring a development organization to its knees.",
-                "https://images.unsplash.com/photo-1532012164546-f432f2e3777a?auto=format&fit=crop&w=400&q=80"
+                "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80"
             ),
             (
                 "978-0201616224", "The Pragmatic Programmer: Your Journey to Mastery",
@@ -146,6 +146,10 @@ def seed_database(db_path=None):
             existing = conn.execute("SELECT id FROM books WHERE isbn = ?", (isbn,)).fetchone()
             if existing:
                 book_map[isbn] = existing["id"]
+                conn.execute(
+                    "UPDATE books SET cover_image_url = ?, description = ? WHERE id = ?",
+                    (img, desc, existing["id"]),
+                )
             else:
                 cur = conn.execute(
                     """

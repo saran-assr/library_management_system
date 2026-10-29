@@ -15,13 +15,13 @@ is_vercel = os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
 
 if is_vercel:
     tmp_db_path = Path("/tmp/library.db")
-    if not tmp_db_path.exists():
-        src_db = ROOT_DIR / "instance" / "library.db"
-        if src_db.exists():
+    src_db = ROOT_DIR / "instance" / "library.db"
+    if src_db.exists():
+        if not tmp_db_path.exists() or src_db.stat().st_mtime > tmp_db_path.stat().st_mtime:
             shutil.copy2(src_db, tmp_db_path)
-        else:
-            from seed import seed_database
-            seed_database(str(tmp_db_path))
+    elif not tmp_db_path.exists():
+        from seed import seed_database
+        seed_database(str(tmp_db_path))
 
     os.environ["DATABASE_PATH"] = str(tmp_db_path)
 
